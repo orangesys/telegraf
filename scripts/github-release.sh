@@ -1,40 +1,27 @@
 #!/bin/bash
-
 set -ex
 
 VERSION=${CIRCLE_TAG##*v}
-BUILD_DIR=$HOME/telegraf-build
 CIRCLE_RELEASE_REPO="telegraf-output-orangesys"
 CIRCLE_RELEASE_USER="orangesys"
+ARTIFACT_DIR='artifacts'
 
-# Executes the given statement, and exits if the command returns a non-zero code.
-function exit_if_fail {
-    command=$@
-    echo "Executing '$command'"
-    eval $command
-    rc=$?
-    if [ $rc -ne 0 ]; then
-        echo "'$command' returned $rc."
-        exit $rc
+run()
+{
+    "$@"
+    ret=$?
+    if [[ $ret -eq 0 ]]
+    then
+        echo "[INFO]  [ $@ ]"
+    else
+        echo "[ERROR] [ $@ ] returned $ret"
+        exit $ret
     fi
 }
 
-# Check that go fmt has been run.
-function check_go_fmt {
-    fmtcount=`git ls-files | grep '.go$' | grep -v Godep | xargs gofmt -l 2>&1 | wc -l`
-    if [ $fmtcount -gt 0 ]; then
-        echo "run 'go fmt ./...' to format your source code."
-        exit 1
-    fi
-}
-
-# Set up the build directory, and then GOPATH.
-#exit_if_fail mkdir $BUILD_DIR
-export GOPATH=$BUILD_DIR
 # Turning off GOGC speeds up build times
-export GOGC=off
 export PATH=$GOPATH/bin:$PATH
-#exit_if_fail mkdir -p $GOPATH/src/github.com/influxdata
+run mkdir -p ${ARTIFACT_DIR}
 
 # Dump some test config to the log.
 echo "Test configuration"
@@ -42,19 +29,15 @@ echo "========================================"
 echo "\$HOME: $HOME"
 echo "\$GOPATH: $GOPATH"
 echo "\$CIRCLE_BRANCH: $CIRCLE_BRANCH"
+echo "\$CIRCLE_TAG: $CIRCLE_TAG"
 
-# Move the checked-out source to a better location
-#exit_if_fail mv $HOME/telegraf $GOPATH/src/github.com/influxdata
-exit_if_fail cd $GOPATH/src/github.com/influxdata/telegraf
+run sudo apt-get install -y rpm python-boto ruby ruby-dev autoconf libtool rpm
+run sudo gem instal fpm
 
-gem instal fpm
-
-sudo apt-get install -y rpm
-unset GOGC
-./scripts/build.py --release --package --platform=linux \
+run ./scripts/build.py --release --package --platform=linux \
   --arch=amd64 --version=${VERSION}
-rm build/telegraf
-mv build $CIRCLE_ARTIFACTS
+run rm -f build/telegraf
+run mv build $ARTIFACT_DIR
 
 #intall github-release cmd
 go get github.com/aktau/github-release
@@ -76,8 +59,8 @@ upload_file() {
     --file $_FILE
 }
 
-cd ${CIRCLE_ARTIFACTS}/build
+cd $ARTIFACT_DIR/build
 
 for i in `ls`; do
-  upload_file $i
+  run upload_file $i
 done
