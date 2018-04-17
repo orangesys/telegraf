@@ -1,9 +1,10 @@
----
+version: 2
+
 defaults: &defaults
   docker:
     - image: 'circleci/golang:1.9.4'
   working_directory: '/go/src/github.com/influxdata/telegraf'
-version: 2
+
 jobs:
   build:
     <<: *defaults
@@ -27,7 +28,7 @@ jobs:
             make test-ci
       - run: 
           name: Build test
-          commmand: |
+          command: |
             CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o build/telegraf cmd/telegraf/telegraf.go
       - save_cache:
           key: v1-{{ .Branch }}-{{ checksum "Godeps" }}
