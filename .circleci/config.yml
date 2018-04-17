@@ -12,11 +12,23 @@ jobs:
       - restore_cache:
           keys: 
             - v1-{{ .Branch }}-{{ checksum "Godeps" }}         
-      - run: |
-          git submodule sync --recursive
-          git submodule update --recursive --init
-      - run: 'make deps'           
-      - run: 'make test-ci'
+      - run: 
+          name: Sync submodule
+          command: |
+            git submodule sync --recursive
+            git submodule update --recursive --init
+      - run: 
+          name: Install go vendor
+          command: |
+            make deps
+      - run: 
+          name: Run test-ci
+          command: |
+            make test-ci
+      - run: 
+          name: Build test
+          commmand: |
+            CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o build/telegraf cmd/telegraf/telegraf.go
       - save_cache:
           key: v1-{{ .Branch }}-{{ checksum "Godeps" }}
           paths:
@@ -25,14 +37,22 @@ jobs:
     <<: *defaults
     steps:
       - checkout
-      - run: |
-          git submodule sync --recursive
-          git submodule update --recursive --init
+      - run: 
+          name: Sync submodule
+          command: |
+            git submodule sync --recursive
+            git submodule update --recursive --init
       - restore_cache:
           keys: 
             - v1-{{ .Branch }}-{{ checksum "Godeps" }}                   
-      - run: 'make deps'      
-      - run: './scripts/github-release.sh'
+      - run: 
+          name: Install go vendor
+          command: |
+            make deps  
+      - run: 
+          name: Release package to github
+          command: |
+            .circleci/github-release.sh
       - store_artifacts:
           path: './artifacts'
           destination: '.'
