@@ -66,6 +66,13 @@ var DefaultClusterStats = map[string]string{
 	"jumbo_chunks": "JumboChunksCount",
 }
 
+var DefaultShardStats = map[string]string{
+	"total_in_use":     "TotalInUse",
+	"total_available":  "TotalAvailable",
+	"total_created":    "TotalCreated",
+	"total_refreshing": "TotalRefreshing",
+}
+
 var MmapStats = map[string]string{
 	"mapped_megabytes":     "Mapped",
 	"non-mapped_megabytes": "NonMapped",
@@ -127,7 +134,8 @@ func (d *MongodbData) AddDefaultStats() {
 		d.addStat(statLine, DefaultReplStats)
 	}
 	d.addStat(statLine, DefaultClusterStats)
-	if d.StatLine.StorageEngine == "mmapv1" {
+	d.addStat(statLine, DefaultShardStats)
+	if d.StatLine.StorageEngine == "mmapv1" || d.StatLine.StorageEngine == "rocksdb" {
 		d.addStat(statLine, MmapStats)
 	} else if d.StatLine.StorageEngine == "wiredTiger" {
 		for key, value := range WiredTigerStats {
