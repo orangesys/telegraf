@@ -30,6 +30,10 @@ jobs:
           name: Build test
           command: |
             CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o build/telegraf cmd/telegraf/telegraf.go
+      - run:
+          name: Show telegraf version
+          command: |
+            ./build/telegraf --version
       - save_cache:
           key: v1-{{ .Branch }}-{{ checksum "Godeps" }}
           paths:
