@@ -6,8 +6,8 @@ defaults: &defaults
   working_directory: '/go/src/github.com/influxdata/telegraf'
 
 jobs:
-  build:
-    <<: *defaults
+  deps:
+    <<: [ *defaults, *go-1_10 ]
     steps:
       - checkout
       - restore_cache:
@@ -35,7 +35,7 @@ jobs:
           paths:
             - "/go/pkg"       
   release:
-    <<: *defaults
+    <<: [ *defaults, *go-1_10 ]
     steps:
       - checkout
       - run: 
