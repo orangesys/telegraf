@@ -7,7 +7,7 @@ defaults: &defaults
 
 jobs:
   deps:
-    <<: [ *defaults, *go-1_10 ]
+    <<: *defaults
     steps:
       - checkout
       - restore_cache:
@@ -35,7 +35,7 @@ jobs:
           paths:
             - "/go/pkg"       
   release:
-    <<: [ *defaults, *go-1_10 ]
+    <<: *defaults
     steps:
       - checkout
       - run: 
