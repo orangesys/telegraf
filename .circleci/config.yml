@@ -1,51 +1,65 @@
 version: 2
 
 defaults: &defaults
+  working_directory: &working_directory
+    /go/src/github.com/influxdata/telegraf
+
+deps-images: &deps-images
   docker:
     - image: 'circleci/golang:1.10'
-  working_directory: '/go/src/github.com/influxdata/telegraf'
+
+godep_cache_key: &godep_cache_key v1-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
+restore_godep_cache: &restore_godep_cache
+  restore_cache:
+    key: *godep_cache_key
+
+checkout_cache_key: &checkout_cache_key v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+restore_checkout_cache: &restore_checkout_cache
+  restore_cache:
+    key: *checkout_cache_key
+
+git-submodule: &git-submodule
+  run: 
+    name: Sync submodule
+    command: |
+      git submodule sync --recursive
+      git submodule update --recursive --init
+    
 
 jobs:
   build:
-    <<: *defaults
+    <<: [*defaults, *deps-images]
     steps:
       - checkout
-      - restore_cache:
-          keys: 
-            - v1-{{ .Branch }}-{{ checksum "Godeps" }}         
-      - run: 
-          name: Sync submodule
-          command: |
-            git submodule sync --recursive
-            git submodule update --recursive --init
+      - save_cache:
+          key: *checkout_cache_key
+          paths: *working_directory      
+      - *restore_godep_cache
+      - *git-submodule
       - run: 
           name: Install go vendor
           command: |
             make deps
+      - run: 'make check'
       - run: 
-          name: Run test-ci
+          name: Run test
           command: |
-            make test-ci
+            make test
       - run: 
           name: Build test
           command: |
             CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o build/telegraf cmd/telegraf/telegraf.go
-      - save_cache:
-          key: v1-{{ .Branch }}-{{ checksum "Godeps" }}
+      - save_cache: 
+          key: *godep_cache_key
           paths:
-            - "/go/pkg"       
+            - "/go/pkg"
+
   release:
-    <<: *defaults
+    <<: [*defaults, *deps-images]
     steps:
-      - checkout
-      - run: 
-          name: Sync submodule
-          command: |
-            git submodule sync --recursive
-            git submodule update --recursive --init
-      - restore_cache:
-          keys: 
-            - v1-{{ .Branch }}-{{ checksum "Godeps" }}                   
+      - *restore_checkout_cache
+      - *git-submodule
+      - *restore_godep_cache                   
       - run: 
           name: Install go vendor
           command: |
