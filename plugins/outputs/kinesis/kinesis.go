@@ -17,13 +17,14 @@ import (
 
 type (
 	KinesisOutput struct {
-		Region    string `toml:"region"`
-		AccessKey string `toml:"access_key"`
-		SecretKey string `toml:"secret_key"`
-		RoleARN   string `toml:"role_arn"`
-		Profile   string `toml:"profile"`
-		Filename  string `toml:"shared_credential_file"`
-		Token     string `toml:"token"`
+		Region      string `toml:"region"`
+		AccessKey   string `toml:"access_key"`
+		SecretKey   string `toml:"secret_key"`
+		RoleARN     string `toml:"role_arn"`
+		Profile     string `toml:"profile"`
+		Filename    string `toml:"shared_credential_file"`
+		Token       string `toml:"token"`
+		EndpointURL string `toml:"endpoint_url"`
 
 		StreamName         string     `toml:"streamname"`
 		PartitionKey       string     `toml:"partitionkey"`
@@ -36,8 +37,9 @@ type (
 	}
 
 	Partition struct {
-		Method string `toml:"method"`
-		Key    string `toml:"key"`
+		Method  string `toml:"method"`
+		Key     string `toml:"key"`
+		Default string `toml:"default"`
 	}
 )
 
@@ -59,6 +61,12 @@ var sampleConfig = `
   #role_arn = ""
   #profile = ""
   #shared_credential_file = ""
+
+  ## Endpoint to make request against, the correct endpoint is automatically
+  ## determined and this option should only be set if you wish to override the
+  ## default.
+  ##   ex: endpoint_url = "http://localhost:8000"
+  # endpoint_url = ""
 
   ## Kinesis StreamName must exist prior to starting telegraf.
   streamname = "StreamName"
@@ -84,10 +92,11 @@ var sampleConfig = `
   #    method = "measurement"
   #
   ## Use the value of a tag for all writes, if the tag is not set the empty
-  ## string will be used:
+  ## default option will be used. When no default, defaults to "telegraf"
   #  [outputs.kinesis.partition]
   #    method = "tag"
   #    key = "host"
+  #    default = "mykey"
 
 
   ## Data format to output.
@@ -126,13 +135,14 @@ func (k *KinesisOutput) Connect() error {
 	}
 
 	credentialConfig := &internalaws.CredentialConfig{
-		Region:    k.Region,
-		AccessKey: k.AccessKey,
-		SecretKey: k.SecretKey,
-		RoleARN:   k.RoleARN,
-		Profile:   k.Profile,
-		Filename:  k.Filename,
-		Token:     k.Token,
+		Region:      k.Region,
+		AccessKey:   k.AccessKey,
+		SecretKey:   k.SecretKey,
+		RoleARN:     k.RoleARN,
+		Profile:     k.Profile,
+		Filename:    k.Filename,
+		Token:       k.Token,
+		EndpointURL: k.EndpointURL,
 	}
 	configProvider := credentialConfig.Credentials()
 	svc := kinesis.New(configProvider)
@@ -205,10 +215,13 @@ func (k *KinesisOutput) getPartitionKey(metric telegraf.Metric) string {
 		case "measurement":
 			return metric.Name()
 		case "tag":
-			if metric.HasTag(k.Partition.Key) {
-				return metric.Tags()[k.Partition.Key]
+			if t, ok := metric.GetTag(k.Partition.Key); ok {
+				return t
+			} else if len(k.Partition.Default) > 0 {
+				return k.Partition.Default
 			}
-			log.Printf("E! kinesis : You have configured a Partition using tag %+v which does not exist.", k.Partition.Key)
+			// Default partition name if default is not set
+			return "telegraf"
 		default:
 			log.Printf("E! kinesis : You have configured a Partition method of %+v which is not supported", k.Partition.Method)
 		}
