@@ -6,7 +6,7 @@ defaults: &defaults
 
 deps-images: &deps-images
   docker:
-    - image: 'circleci/golang:1.10'
+    - image: 'quay.io/influxdb/telegraf-ci:1.11.1'
 
 godep_cache_key: &godep_cache_key v1-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
 restore_godep_cache: &restore_godep_cache
