@@ -80,7 +80,6 @@ func (b *Buffer) Add(metrics ...telegraf.Metric) {
 		MetricsWritten.Incr(1)
 		b.push(metrics[i])
 	}
-	b.mu.Unlock()
 }
 
 // Batch returns a batch of metrics of size batchSize.
