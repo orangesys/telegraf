@@ -33,14 +33,6 @@ const (
 	Connected
 )
 
-type ConnectionState int
-
-const (
-	Disconnected ConnectionState = iota
-	Connecting
-	Connected
-)
-
 type MQTTConsumer struct {
 	Servers                []string
 	Topics                 []string
@@ -232,6 +224,7 @@ func (m *MQTTConsumer) recvMessage(c mqtt.Client, msg mqtt.Message) {
 			return
 		}
 	}
+}
 
 func (m *MQTTConsumer) onMessage(acc telegraf.TrackingAccumulator, msg mqtt.Message) error {
 	metrics, err := m.parser.Parse(msg.Payload())
