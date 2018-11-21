@@ -8,7 +8,7 @@ deps-images: &deps-images
   docker:
     - image: 'quay.io/influxdb/telegraf-ci:1.11.1'
 
-godep_cache_key: &godep_cache_key v1-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
+godep_cache_key: &godep_cache_key v1-vendor-{{ checksum "Gopkg.lock" }}
 restore_godep_cache: &restore_godep_cache
   restore_cache:
     key: *godep_cache_key
