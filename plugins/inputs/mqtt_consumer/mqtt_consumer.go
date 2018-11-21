@@ -1,23 +1,37 @@
 package mqtt_consumer
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"strings"
 	"time"
 
+	"github.com/eclipse/paho.mqtt.golang"
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/internal"
 	"github.com/influxdata/telegraf/internal/tls"
 	"github.com/influxdata/telegraf/plugins/inputs"
 	"github.com/influxdata/telegraf/plugins/parsers"
-
-	"github.com/eclipse/paho.mqtt.golang"
 )
 
-// 30 Seconds is the default used by paho.mqtt.golang
-var defaultConnectionTimeout = internal.Duration{Duration: 30 * time.Second}
+var (
+	// 30 Seconds is the default used by paho.mqtt.golang
+	defaultConnectionTimeout = internal.Duration{Duration: 30 * time.Second}
+
+	defaultMaxUndeliveredMessages = 1000
+)
+
+type ConnectionState int
+type empty struct{}
+type semaphore chan empty
+
+const (
+	Disconnected ConnectionState = iota
+	Connecting
+	Connected
+)
 
 type ConnectionState int
 
@@ -28,16 +42,17 @@ const (
 )
 
 type MQTTConsumer struct {
-	Servers           []string
-	Topics            []string
-	Username          string
-	Password          string
-	QoS               int               `toml:"qos"`
-	ConnectionTimeout internal.Duration `toml:"connection_timeout"`
+	Servers                []string
+	Topics                 []string
+	Username               string
+	Password               string
+	QoS                    int               `toml:"qos"`
+	ConnectionTimeout      internal.Duration `toml:"connection_timeout"`
+	MaxUndeliveredMessages int               `toml:"max_undelivered_messages"`
 
 	parser parsers.Parser
 
-	// Legacy metric buffer support
+	// Legacy metric buffer support; deprecated in v0.10.3
 	MetricBuffer int
 
 	PersistentSession bool
@@ -45,9 +60,14 @@ type MQTTConsumer struct {
 	tls.ClientConfig
 
 	client     mqtt.Client
-	acc        telegraf.Accumulator
+	acc        telegraf.TrackingAccumulator
 	state      ConnectionState
 	subscribed bool
+	sem        semaphore
+	messages   map[telegraf.TrackingID]bool
+
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 var sampleConfig = `
@@ -55,10 +75,27 @@ var sampleConfig = `
   ## schema can be tcp, ssl, or ws.
   servers = ["tcp://localhost:1883"]
 
-  ## MQTT QoS, must be 0, 1, or 2
+  ## QoS policy for messages
+  ##   0 = at most once
+  ##   1 = at least once
+  ##   2 = exactly once
+  ##
+  ## When using a QoS of 1 or 2, you should enable persistent_session to allow
+  ## resuming unacknowledged messages.
   qos = 0
+
   ## Connection timeout for initial connection in seconds
   connection_timeout = "30s"
+
+  ## Maximum messages to read from the broker that have not been written by an
+  ## output.  For best throughput set based on the number of metrics within
+  ## each message and the size of the output's metric_batch_size.
+  ##
+  ## For example, if each message from the queue contains 10 metrics and the
+  ## output metric_batch_size is 1000, setting this to 100 will ensure that a
+  ## full batch is collected and the write is triggered immediately without
+  ## waiting until the next flush_interval.
+  # max_undelivered_messages = 1000
 
   ## Topics to subscribe to
   topics = [
@@ -111,7 +148,6 @@ func (m *MQTTConsumer) Start(acc telegraf.Accumulator) error {
 		return errors.New("persistent_session requires client_id")
 	}
 
-	m.acc = acc
 	if m.QoS > 2 || m.QoS < 0 {
 		return fmt.Errorf("qos value must be 0, 1, or 2: %d", m.QoS)
 	}
@@ -119,6 +155,9 @@ func (m *MQTTConsumer) Start(acc telegraf.Accumulator) error {
 	if m.ConnectionTimeout.Duration < 1*time.Second {
 		return fmt.Errorf("connection_timeout must be greater than 1s: %s", m.ConnectionTimeout.Duration)
 	}
+
+	m.acc = acc.WithTracking(m.MaxUndeliveredMessages)
+	m.ctx, m.cancel = context.WithCancel(context.Background())
 
 	opts, err := m.createOpts()
 	if err != nil {
@@ -139,8 +178,10 @@ func (m *MQTTConsumer) connect() error {
 		return err
 	}
 
-	log.Printf("I! [inputs.mqtt_consumer]: connected %v", m.Servers)
+	log.Printf("I! [inputs.mqtt_consumer] Connected %v", m.Servers)
 	m.state = Connected
+	m.sem = make(semaphore, m.MaxUndeliveredMessages)
+	m.messages = make(map[telegraf.TrackingID]bool)
 
 	// Only subscribe on first connection when using persistent sessions.  On
 	// subsequent connections the subscriptions should be stored in the
@@ -165,38 +206,63 @@ func (m *MQTTConsumer) connect() error {
 
 func (m *MQTTConsumer) onConnectionLost(c mqtt.Client, err error) {
 	m.acc.AddError(fmt.Errorf("connection lost: %v", err))
-	log.Printf("D! [inputs.mqtt_consumer]: disconnected %v", m.Servers)
+	log.Printf("D! [inputs.mqtt_consumer] Disconnected %v", m.Servers)
 	m.state = Disconnected
 	return
 }
 
 func (m *MQTTConsumer) recvMessage(c mqtt.Client, msg mqtt.Message) {
-	topic := msg.Topic()
-	metrics, err := m.parser.Parse(msg.Payload())
-	if err != nil {
-		m.acc.AddError(err)
+	for {
+		select {
+		case track := <-m.acc.Delivered():
+			_, ok := m.messages[track.ID()]
+			if !ok {
+				// Added by a previous connection
+				continue
+			}
+			<-m.sem
+			// No ack, MQTT does not support durable handling
+			delete(m.messages, track.ID())
+		case m.sem <- empty{}:
+			err := m.onMessage(m.acc, msg)
+			if err != nil {
+				m.acc.AddError(err)
+				<-m.sem
+			}
+			return
+		}
 	}
 
-	for _, metric := range metrics {
-		tags := metric.Tags()
-		tags["topic"] = topic
-		m.acc.AddFields(metric.Name(), metric.Fields(), tags, metric.Time())
+func (m *MQTTConsumer) onMessage(acc telegraf.TrackingAccumulator, msg mqtt.Message) error {
+	metrics, err := m.parser.Parse(msg.Payload())
+	if err != nil {
+		return err
 	}
+
+	topic := msg.Topic()
+	for _, metric := range metrics {
+		metric.AddTag("topic", topic)
+	}
+
+	id := acc.AddTrackingMetricGroup(metrics)
+	m.messages[id] = true
+	return nil
 }
 
 func (m *MQTTConsumer) Stop() {
 	if m.state == Connected {
-		log.Printf("D! [inputs.mqtt_consumer]: disconnecting %v", m.Servers)
+		log.Printf("D! [inputs.mqtt_consumer] Disconnecting %v", m.Servers)
 		m.client.Disconnect(200)
-		log.Printf("D! [inputs.mqtt_consumer]: disconnected %v", m.Servers)
+		log.Printf("D! [inputs.mqtt_consumer] Disconnected %v", m.Servers)
 		m.state = Disconnected
 	}
+	m.cancel()
 }
 
 func (m *MQTTConsumer) Gather(acc telegraf.Accumulator) error {
 	if m.state == Disconnected {
 		m.state = Connecting
-		log.Printf("D! [inputs.mqtt_consumer]: connecting %v", m.Servers)
+		log.Printf("D! [inputs.mqtt_consumer] Connecting %v", m.Servers)
 		m.connect()
 	}
 
@@ -239,7 +305,7 @@ func (m *MQTTConsumer) createOpts() (*mqtt.ClientOptions, error) {
 	for _, server := range m.Servers {
 		// Preserve support for host:port style servers; deprecated in Telegraf 1.4.4
 		if !strings.Contains(server, "://") {
-			log.Printf("W! [inputs.mqtt_consumer] server %q should be updated to use `scheme://host:port` format", server)
+			log.Printf("W! [inputs.mqtt_consumer] Server %q should be updated to use `scheme://host:port` format", server)
 			if tlsCfg == nil {
 				server = "tcp://" + server
 			} else {
@@ -260,8 +326,9 @@ func (m *MQTTConsumer) createOpts() (*mqtt.ClientOptions, error) {
 func init() {
 	inputs.Add("mqtt_consumer", func() telegraf.Input {
 		return &MQTTConsumer{
-			ConnectionTimeout: defaultConnectionTimeout,
-			state:             Disconnected,
+			ConnectionTimeout:      defaultConnectionTimeout,
+			MaxUndeliveredMessages: defaultMaxUndeliveredMessages,
+			state: Disconnected,
 		}
 	})
 }

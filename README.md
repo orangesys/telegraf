@@ -53,6 +53,11 @@ which is installed by the Makefile if you don't have it already.
    make
    ```
 
+### Changelog
+
+View the [changelog](/CHANGELOG.md) for the latest updates and changes by
+version.
+
 ### Nightly Builds
 
 These builds are generated from the master branch:
@@ -124,6 +129,11 @@ telegraf --config telegraf.conf --input-filter cpu:mem --output-filter influxdb
 
 For documentation on the latest development code see the [documentation index][devel docs].
 
+
+[Latest Release Documentation][release docs].
+
+For documentation on the latest development code see the [documentation index][devel docs].
+
 [release docs]: https://docs.influxdata.com/telegraf
 [devel docs]: docs
 
@@ -168,17 +178,21 @@ For documentation on the latest development code see the [documentation index][d
 * [haproxy](./plugins/inputs/haproxy)
 * [hddtemp](./plugins/inputs/hddtemp)
 * [httpjson](./plugins/inputs/httpjson) (generic JSON-emitting http service plugin)
-* [http_listener](./plugins/inputs/http_listener)
+* [http_listener](./plugins/inputs/influxdb_listener) (deprecated, renamed to [influxdb_listener](/plugins/inputs/influxdb_listener))
+* [http_listener_v2](./plugins/inputs/http_listener_v2)
 * [http](./plugins/inputs/http) (generic HTTP plugin, supports using input data formats)
 * [http_response](./plugins/inputs/http_response)
 * [icinga2](./plugins/inputs/icinga2)
 * [influxdb](./plugins/inputs/influxdb)
 * [influxdb_v2](./plugins/inputs/influxdb_v2)
+* [influxdb_listener](./plugins/inputs/influxdb_listener)
 * [internal](./plugins/inputs/internal)
 * [interrupts](./plugins/inputs/interrupts)
 * [ipmi_sensor](./plugins/inputs/ipmi_sensor)
 * [ipset](./plugins/inputs/ipset)
 * [iptables](./plugins/inputs/iptables)
+* [ipvs](./plugins/inputs/ipvs)
+* [jenkins](./plugins/inputs/jenkins)
 * [jolokia2](./plugins/inputs/jolokia2) (java, cassandra, kafka)
 * [jolokia](./plugins/inputs/jolokia) (deprecated, use [jolokia2](./plugins/inputs/jolokia2))
 * [jti_openconfig_telemetry](./plugins/inputs/jti_openconfig_telemetry)
@@ -208,7 +222,10 @@ For documentation on the latest development code see the [documentation index][d
 * [netstat](./plugins/inputs/net)
 * [nginx](./plugins/inputs/nginx)
 * [nginx_plus](./plugins/inputs/nginx_plus)
+* [nginx_plus_api](./plugins/inputs/nginx_plus_api)
+* [nginx_vts](./plugins/inputs/nginx_vts)
 * [nsq_consumer](./plugins/inputs/nsq_consumer)
+* [nginx_vts](./plugins/inputs/nginx_vts)
 * [nsq](./plugins/inputs/nsq)
 * [nstat](./plugins/inputs/nstat)
 * [ntpq](./plugins/inputs/ntpq)
@@ -266,6 +283,7 @@ For documentation on the latest development code see the [documentation index][d
   * [rollbar](./plugins/inputs/webhooks/rollbar)
 * [win_perf_counters](./plugins/inputs/win_perf_counters) (windows performance counters)
 * [win_services](./plugins/inputs/win_services)
+* [wireless](./plugins/inputs/wireless)
 * [zfs](./plugins/inputs/zfs)
 * [zipkin](./plugins/inputs/zipkin)
 * [zookeeper](./plugins/inputs/zookeeper)
@@ -294,10 +312,13 @@ For documentation on the latest development code see the [documentation index][d
 ## Processor Plugins
 
 * [converter](./plugins/processors/converter)
+* [enum](./plugins/processors/enum)
 * [override](./plugins/processors/override)
+* [parser](./plugins/processors/parser)
 * [printer](./plugins/processors/printer)
 * [regex](./plugins/processors/regex)
 * [rename](./plugins/processors/rename)
+* [strings](./plugins/processors/strings)
 * [topk](./plugins/processors/topk)
 
 ## Aggregator Plugins
@@ -335,6 +356,7 @@ For documentation on the latest development code see the [documentation index][d
 * [riemann](./plugins/outputs/riemann)
 * [riemann_legacy](./plugins/outputs/riemann_legacy)
 * [socket_writer](./plugins/outputs/socket_writer)
+* [stackdriver](./plugins/outputs/stackdriver)
 * [tcp](./plugins/outputs/socket_writer)
 * [udp](./plugins/outputs/socket_writer)
 * [wavefront](./plugins/outputs/wavefront)

@@ -109,6 +109,9 @@ Config:
   name_key = "name"
   tag_keys = ["my_tag_1"]
   string_fields = ["b_my_field"]
+  json_name_key = "name"
+  tag_keys = ["my_tag_1"]
+  json_string_fields = ["b_my_field"]
   data_format = "json"
 ```
 

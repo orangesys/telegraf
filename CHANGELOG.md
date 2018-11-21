@@ -1,3 +1,70 @@
+## v1.9 [2018-11-20]
+
+#### Release Notes
+
+- The `http_listener` input plugin has been renamed to `influxdb_listener` and
+  use of the original name is deprecated.  The new name better describes the
+  intended use of the plugin as a InfluxDB relay.  For general purpose
+  transfer of metrics in any format via HTTP, it is recommended to use
+  `http_listener_v2` instead.
+
+- Input plugins are no longer limited from adding metrics when the output is
+  writing, and new metrics will move into the metric buffer as needed.  This
+  will provide more robust degradation and recovery when writing to a slow
+  output at high throughput.
+
+  To avoid over consumption when reading from queue consumers: `kafka_consumer`,
+  `amqp_consumer`, `mqtt_consumer`, `nats_consumer`, and `nsq_consumer` use
+  the new option `max_undelivered_messages` to limit the number of outstanding
+  unwritten metrics.
+
+#### New Inputs
+
+- [http_listener_v2](/plugins/inputs/http_listener_v2/README.md) - Contributed by @jul1u5
+- [ipvs](/plugins/inputs/ipvs/README.md) - Contributed by @amoghe
+- [jenkins](/plugins/inputs/jenkins/README.md) - Contributed by @influxdata & @lpic10
+- [nginx_plus_api](/plugins/inputs/nginx_plus_api/README.md) - Contributed by @Bugagazavr
+- [nginx_vts](/plugins/inputs/nginx_vts/README.md) - Contributed by @monder
+- [wireless](/plugins/inputs/wireless/README.md) - Contributed by @jamesmaidment
+
+#### New Outputs
+
+- [stackdriver](/plugins/outputs/stackdriver/README.md) - Contributed by @jamesmaidment
+
+#### Features
+
+- [#4686](https://github.com/influxdata/telegraf/pull/4686): Add replace function to strings processor.
+- [#4754](https://github.com/influxdata/telegraf/pull/4754): Query servers in parallel in dns_query input.
+- [#4753](https://github.com/influxdata/telegraf/pull/4753): Add ability to define a custom service name when installing as a Windows service.
+- [#4703](https://github.com/influxdata/telegraf/pull/4703): Add support for IPv6 in the ping plugin.
+- [#4781](https://github.com/influxdata/telegraf/pull/4781): Add new config for csv column explicit type conversion.
+- [#4800](https://github.com/influxdata/telegraf/pull/4800): Add an option to specify a custom datadog URL.
+- [#4803](https://github.com/influxdata/telegraf/pull/4803): Use non-allocating field and tag accessors in datadog output.
+- [#4752](https://github.com/influxdata/telegraf/pull/4752): Add per-directory file counts in the filecount input.
+- [#4811](https://github.com/influxdata/telegraf/pull/4811): Add windows service name lookup to procstat input.
+- [#4807](https://github.com/influxdata/telegraf/pull/4807): Add entity-body compression to http output.
+- [#4838](https://github.com/influxdata/telegraf/pull/4838): Add telegraf version to User-Agent header.
+- [#4864](https://github.com/influxdata/telegraf/pull/4864): Use DescribeStreamSummary in place of ListStreams in kinesis output.
+- [#4852](https://github.com/influxdata/telegraf/pull/4852): Add ability to specify bytes options as strings with units.
+- [#3903](https://github.com/influxdata/telegraf/pull/3903): Add support for TLS configuration in NSQ input.
+- [#4914](https://github.com/influxdata/telegraf/pull/4914): Collect additional stats in memcached input.
+- [#3847](https://github.com/influxdata/telegraf/pull/3847): Add wireless input plugin.
+- [#4934](https://github.com/influxdata/telegraf/pull/4934): Add LUN to datasource translation in vsphere input.
+- [#4798](https://github.com/influxdata/telegraf/pull/4798): Allow connecting to prometheus via unix socket.
+- [#4920](https://github.com/influxdata/telegraf/pull/4920): Add scraping for Prometheus endpoint in Kubernetes.
+- [#4938](https://github.com/influxdata/telegraf/pull/4938): Add per output flush_interval, metric_buffer_limit and metric_batch_size.
+
+#### Bugfixes
+
+- [#4950](https://github.com/influxdata/telegraf/pull/4950): Remove the time_key from the field values in JSON parser.
+- [#3968](https://github.com/influxdata/telegraf/issues/3968): Fix input time rounding when using a custom interval.
+- [#4938](https://github.com/influxdata/telegraf/pull/4938): Fix potential deadlock or leaked resources on restart/reload.
+- [#2919](https://github.com/influxdata/telegraf/pull/2919): Fix outputs block inputs when batch size is reached.
+- [#4789](https://github.com/influxdata/telegraf/issues/4789): Fix potential missing datastore metrics in vSphere plugin.
+- [#4982](https://github.com/influxdata/telegraf/issues/4982): Log warning when wireless plugin is used on unsupported platform.
+- [#4965](https://github.com/influxdata/telegraf/issues/4965): Handle non-tls columns for mysql input.
+- [#4983](https://github.com/influxdata/telegraf/issues/4983): Fix panic in influxdb_listener when using gzip encoding.
+
 ## v1.8.3 [2018-10-30]
 
 - [#4873](https://github.com/influxdata/telegraf/pull/4873): Add DN attributes as tags in x509_cert input to avoid series overwrite.
