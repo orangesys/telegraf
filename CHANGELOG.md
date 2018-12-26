@@ -1,3 +1,18 @@
+## v1.9.1 [2018-12-11]
+
+### Bugfixes
+
+- [#5006](https://github.com/influxdata/telegraf/issues/5006): Fix boolean handling in splunkmetric serializer.
+- [#5046](https://github.com/influxdata/telegraf/issues/5046): Set default config values in jenkins input.
+- [#4664](https://github.com/influxdata/telegraf/issues/4664): Fix server connection and document stats in mongodb input.
+- [#5010](https://github.com/influxdata/telegraf/issues/5010): Add X-Requested-By header to graylog input.
+- [#5052](https://github.com/influxdata/telegraf/issues/5052): Fix metric memory not freed from the metric buffer on write.
+- [#3817](https://github.com/influxdata/telegraf/issues/3817): Add support for client tls certificates in postgresql inputs.
+- [#5082](https://github.com/influxdata/telegraf/issues/5082): Prevent panic when marking the offset in kafka_consumer.
+- [#5084](https://github.com/influxdata/telegraf/issues/5084): Add early metrics to aggregator and honor drop_original setting.
+- [#5112](https://github.com/influxdata/telegraf/pull/5112): Use -W flag on bsd variants in ping input.
+- [#5114](https://github.com/influxdata/telegraf/issues/5114): Allow delta metrics in wavefront parser.
+
 ## v1.9 [2018-11-20]
 
 #### Release Notes
@@ -66,6 +81,8 @@
 - [#4983](https://github.com/influxdata/telegraf/issues/4983): Fix panic in influxdb_listener when using gzip encoding.
 
 ## v1.8.3 [2018-10-30]
+
+### Bugfixes
 
 - [#4873](https://github.com/influxdata/telegraf/pull/4873): Add DN attributes as tags in x509_cert input to avoid series overwrite.
 - [#4921](https://github.com/influxdata/telegraf/issues/4921): Prevent connection leak by closing unused connections in amqp output.
