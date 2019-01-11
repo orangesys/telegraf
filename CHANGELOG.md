@@ -1,3 +1,22 @@
+## v1.9.2 [2019-01-08]
+
+### Bugfixes
+
+- [#5130](https://github.com/influxdata/telegraf/pull/5130): Increase varnishstat timeout.
+- [#5135](https://github.com/influxdata/telegraf/pull/5135): Remove storage calculation for non Azure managed instances and add server version.
+- [#5083](https://github.com/influxdata/telegraf/pull/5083): Fix error sending empty tag value in azure_monitor output.
+- [#5143](https://github.com/influxdata/telegraf/issues/5143): Fix panic with prometheus input plugin on shutdown.
+- [#4482](https://github.com/influxdata/telegraf/issues/4482): Support non-transparent framing of syslog messages.
+- [#5151](https://github.com/influxdata/telegraf/issues/5151): Apply global and plugin level metric modifications before filtering.
+- [#5167](https://github.com/influxdata/telegraf/pull/5167): Fix num_remapped_pgs field in ceph plugin.
+- [#5179](https://github.com/influxdata/telegraf/issues/5179): Add PDH_NO_DATA to known counter error codes in win_perf_counters.
+- [#5170](https://github.com/influxdata/telegraf/issues/5170): Fix amqp_consumer stops consuming on empty message.
+- [#4906](https://github.com/influxdata/telegraf/issues/4906): Fix multiple replace tables not working in strings processor.
+- [#5219](https://github.com/influxdata/telegraf/issues/5219): Allow non local udp connections in net_response.
+- [#5218](https://github.com/influxdata/telegraf/issues/5218): Fix toml option names in parser processor.
+- [#5225](https://github.com/influxdata/telegraf/issues/5225): Fix panic in docker input with bad endpoint.
+- [#5209](https://github.com/influxdata/telegraf/issues/5209): Fix original metric modified by aggregator filters.
+
 ## v1.9.1 [2018-12-11]
 
 ### Bugfixes
