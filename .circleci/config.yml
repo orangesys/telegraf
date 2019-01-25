@@ -2,15 +2,6 @@
 defaults:
   defaults: &defaults
     working_directory: '/go/src/github.com/influxdata/telegraf'
-  go-1_9: &go-1_9
-    docker:
-      - image: 'quay.io/influxdb/telegraf-ci:1.9.7'
-  go-1_10: &go-1_10
-    docker:
-      - image: 'quay.io/influxdb/telegraf-ci:1.10.7'
-  go-1_11: &go-1_11
-    docker:
-      - image: 'quay.io/influxdb/telegraf-ci:1.11.4'
 
 version: 2
 
@@ -20,7 +11,7 @@ defaults: &defaults
 
 deps-images: &deps-images
   docker:
-    - image: 'quay.io/influxdb/telegraf-ci:1.11.1'
+    - image: 'quay.io/influxdb/telegraf-ci:1.11.4'
 
 godep_cache_key: &godep_cache_key v1-vendor-{{ checksum "Gopkg.lock" }}
 restore_godep_cache: &restore_godep_cache
