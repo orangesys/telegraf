@@ -1,26 +1,10 @@
----
-defaults:
-  defaults: &defaults
-    working_directory: '/go/src/github.com/influxdata/telegraf'
-  go-1_9: &go-1_9
-    docker:
-      - image: 'quay.io/influxdb/telegraf-ci:1.9.7'
-  go-1_10: &go-1_10
-    docker:
-      - image: 'quay.io/influxdb/telegraf-ci:1.10.8'
-  go-1_11: &go-1_11
-    docker:
-      - image: 'quay.io/influxdb/telegraf-ci:1.11.5'
-
-version: 2
-
 defaults: &defaults
   working_directory: &working_directory
     /go/src/github.com/influxdata/telegraf
 
 deps-images: &deps-images
   docker:
-    - image: 'quay.io/influxdb/telegraf-ci:1.11.4'
+    - image: 'quay.io/influxdb/telegraf-ci:1.11.5'
 
 godep_cache_key: &godep_cache_key v1-vendor-{{ checksum "Gopkg.lock" }}
 restore_godep_cache: &restore_godep_cache
@@ -38,7 +22,9 @@ git-submodule: &git-submodule
     command: |
       git submodule sync --recursive
       git submodule update --recursive --init
-    
+
+version: 2
+
 jobs:
   deps:
     <<: [*defaults, *deps-images]
@@ -64,8 +50,6 @@ jobs:
     steps:
       - attach_workspace:
           at: '/go/src'
-      # - run: 'make check'
-      # skip with go 1.11
       - run: 'make test'
       - run: 
           name: Build test
