@@ -55,9 +55,6 @@ jobs:
           name: Build test
           command: |
             CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o build/telegraf cmd/telegraf/telegraf.go
-      # disabled due to gofmt differences (1.10 vs 1.11).
-      #- run: 'make check'
-      - run: 'make test'
 
   release:
     <<: [*defaults, *deps-images]
