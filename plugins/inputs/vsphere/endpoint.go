@@ -963,13 +963,6 @@ func (e *Endpoint) collectChunk(ctx context.Context, pqs []types.PerfQuerySpec, 
 				}
 				nValues++
 
-				// Since non-realtime metrics are queries with a lookback, we need to check the high-water mark
-				// to determine if this should be included. Only samples not seen before should be included.
-				if !(res.realTime || e.hwMarks.IsNew(tsKey, ts)) {
-					continue
-				}
-				value := v.Value[idx]
-
 				// Organize the metrics into a bucket per measurement.
 				mn, fn := e.makeMetricIdentifier(prefix, name)
 				bKey := mn + " " + v.Instance + " " + strconv.FormatInt(ts.UnixNano(), 10)
