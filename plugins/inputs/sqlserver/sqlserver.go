@@ -560,7 +560,9 @@ WHERE	(
 				'Used memory (KB)',
 				'Forwarded Records/sec',
 				'Background Writer pages/sec',
-				'Percent Log Used'
+				'Percent Log Used',
+				'Log Send Queue KB',
+				'Redo Queue KB'
 			)
 		) OR (
 			object_name LIKE '%User Settable%'

@@ -3,6 +3,7 @@ package stackdriver
 import (
 	"context"
 	"fmt"
+	"hash/fnv"
 	"log"
 	"path"
 	"sort"
@@ -19,8 +20,10 @@ import (
 
 // Stackdriver is the Google Stackdriver config info.
 type Stackdriver struct {
-	Project   string
-	Namespace string
+	Project        string
+	Namespace      string
+	ResourceType   string            `toml:"resource_type"`
+	ResourceLabels map[string]string `toml:"resource_labels"`
 
 	client *monitoring.MetricClient
 }
@@ -47,11 +50,20 @@ const (
 )
 
 var sampleConfig = `
-  # GCP Project
+  ## GCP Project
   project = "erudite-bloom-151019"
 
-  # The namespace for the metric descriptor
+  ## The namespace for the metric descriptor
   namespace = "telegraf"
+
+  ## Custom resource type
+  # resource_type = "generic_node"
+
+  ## Additonal resource labels
+  # [outputs.stackdriver.resource_labels]
+  #   node_id = "$HOSTNAME"
+  #   namespace = "myapp"
+  #   location = "eu-north0"
 `
 
 // Connect initiates the primary connection to the GCP project.
@@ -63,6 +75,16 @@ func (s *Stackdriver) Connect() error {
 	if s.Namespace == "" {
 		return fmt.Errorf("Namespace is a required field for stackdriver output")
 	}
+
+	if s.ResourceType == "" {
+		s.ResourceType = "global"
+	}
+
+	if s.ResourceLabels == nil {
+		s.ResourceLabels = make(map[string]string, 1)
+	}
+
+	s.ResourceLabels["project_id"] = s.Project
 
 	if s.client == nil {
 		ctx := context.Background()
@@ -90,15 +112,34 @@ func sorted(metrics []telegraf.Metric) []telegraf.Metric {
 	return batch
 }
 
+type timeSeriesBuckets map[uint64][]*monitoringpb.TimeSeries
+
+func (tsb timeSeriesBuckets) Add(m telegraf.Metric, f *telegraf.Field, ts *monitoringpb.TimeSeries) {
+	h := fnv.New64a()
+	h.Write([]byte(m.Name()))
+	h.Write([]byte{'\n'})
+	h.Write([]byte(f.Key))
+	h.Write([]byte{'\n'})
+	for key, value := range m.Tags() {
+		h.Write([]byte(key))
+		h.Write([]byte{'\n'})
+		h.Write([]byte(value))
+		h.Write([]byte{'\n'})
+	}
+	k := h.Sum64()
+
+	s := tsb[k]
+	s = append(s, ts)
+	tsb[k] = s
+}
+
 // Write the metrics to Google Cloud Stackdriver.
 func (s *Stackdriver) Write(metrics []telegraf.Metric) error {
 	ctx := context.Background()
 
 	batch := sorted(metrics)
-
+	buckets := make(timeSeriesBuckets)
 	for _, m := range batch {
-		timeSeries := []*monitoringpb.TimeSeries{}
-
 		for _, f := range m.FieldList() {
 			value, err := getStackdriverTypedValue(f.Value)
 			if err != nil {
@@ -129,27 +170,48 @@ func (s *Stackdriver) Write(metrics []telegraf.Metric) error {
 			}
 
 			// Prepare time series.
-			timeSeries = append(timeSeries,
-				&monitoringpb.TimeSeries{
-					Metric: &metricpb.Metric{
-						Type:   path.Join("custom.googleapis.com", s.Namespace, m.Name(), f.Key),
-						Labels: getStackdriverLabels(m.TagList()),
-					},
-					MetricKind: metricKind,
-					Resource: &monitoredrespb.MonitoredResource{
-						Type: "global",
-						Labels: map[string]string{
-							"project_id": s.Project,
-						},
-					},
-					Points: []*monitoringpb.Point{
-						dataPoint,
-					},
-				})
-		}
+			timeSeries := &monitoringpb.TimeSeries{
+				Metric: &metricpb.Metric{
+					Type:   path.Join("custom.googleapis.com", s.Namespace, m.Name(), f.Key),
+					Labels: getStackdriverLabels(m.TagList()),
+				},
+				MetricKind: metricKind,
+				Resource: &monitoredrespb.MonitoredResource{
+					Type:   s.ResourceType,
+					Labels: s.ResourceLabels,
+				},
+				Points: []*monitoringpb.Point{
+					dataPoint,
+				},
+			}
 
-		if len(timeSeries) < 1 {
-			continue
+			buckets.Add(m, f, timeSeries)
+		}
+	}
+
+	// process the buckets in order
+	keys := make([]uint64, 0, len(buckets))
+	for k := range buckets {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+	for len(buckets) != 0 {
+		// can send up to 200 time series to stackdriver
+		timeSeries := make([]*monitoringpb.TimeSeries, 0, 200)
+		for i := 0; i < len(keys) && len(timeSeries) < cap(timeSeries); i++ {
+			k := keys[i]
+			s := buckets[k]
+			timeSeries = append(timeSeries, s[0])
+			if len(s) == 1 {
+				delete(buckets, k)
+				keys = append(keys[:i], keys[i+1:]...)
+				i--
+				continue
+			}
+
+			s = s[1:]
+			buckets[k] = s
 		}
 
 		// Prepare time series request.
