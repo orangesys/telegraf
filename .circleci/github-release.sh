@@ -34,8 +34,10 @@ echo "\$CIRCLE_TAG: $CIRCLE_TAG"
 run apt-get install -y rpm python-boto ruby ruby-dev autoconf libtool rpm
 run gem instal fpm
 
-run ./scripts/build.py --release --package --platform=linux \
-  --arch=amd64 --version=${VERSION}
+# run ./scripts/build.py --release --package --platform=linux \
+  # --arch=amd64 --version=${VERSION}
+run ./scripts/build.py --release --package --platform=all \
+   --arch=all --version=${VERSION}
 run rm -f build/telegraf
 run mv build $ARTIFACT_DIR
 
