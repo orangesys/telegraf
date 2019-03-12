@@ -31,15 +31,10 @@ echo "\$GOPATH: $GOPATH"
 echo "\$CIRCLE_BRANCH: $CIRCLE_BRANCH"
 echo "\$CIRCLE_TAG: $CIRCLE_TAG"
 
-# run apt-get install -y rpm python-boto ruby ruby-dev autoconf libtool rpm
-# run gem instal fpm
-
-# run ./scripts/build.py --release --package --platform=linux \
-  # --arch=amd64 --version=${VERSION}
 run ./scripts/build.py --release --package --platform=all \
    --arch=all --version=${VERSION}
 run rm -f build/telegraf
-run mv build $ARTIFACT_DIR
+run find build -type f -name telegraf-* |xargs cp -t $ARTIFACT_DIR
 
 #intall github-release cmd
 go get github.com/aktau/github-release
@@ -61,8 +56,8 @@ upload_file() {
     --file $_FILE
 }
 
-# cd $ARTIFACT_DIR/build
+cd $ARTIFACT_DIR
 
-for i in `find artifacts/build/*/* -type f -name telegraf-*`; do
+for i in `ls`; do
   run upload_file $i
 done
