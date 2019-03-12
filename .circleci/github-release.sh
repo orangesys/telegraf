@@ -34,7 +34,7 @@ echo "\$CIRCLE_TAG: $CIRCLE_TAG"
 run ./scripts/build.py --release --package --platform=all \
    --arch=all --version=${VERSION}
 run rm -f build/telegraf
-run find build -type f -name telegraf-* |xargs cp -t $ARTIFACT_DIR
+run find build -type f -name telegraf-* -exec xargs cp -t $ARTIFACT_DIR \;
 
 #intall github-release cmd
 go get github.com/aktau/github-release
