@@ -1,3 +1,29 @@
+## v1.10.2 [2019-04-02]
+
+#### Release Notes
+
+- String fields no longer have leading and trailing quotating marks removed in
+  the grok parser.  If you are capturing quoted strings you may need to update
+  the patterns.
+
+#### Bugfixes
+
+- [#5612](https://github.com/influxdata/telegraf/pull/5612): Fix deadlock when Telegraf is aligning aggregators.
+- [#5523](https://github.com/influxdata/telegraf/issues/5523): Fix missing cluster stats in ceph input.
+- [#5566](https://github.com/influxdata/telegraf/pull/5566): Fix reading major and minor block devices identifiers in diskio input.
+- [#5607](https://github.com/influxdata/telegraf/pull/5607): Add owned directories to rpm package spec.
+- [#4998](https://github.com/influxdata/telegraf/issues/4998): Fix last character removed from string field in grok parser.
+- [#5632](https://github.com/influxdata/telegraf/pull/5632): Fix drop tracking of metrics removed with aggregator drop_original.
+- [#5540](https://github.com/influxdata/telegraf/pull/5540): Fix open file error handling in file output.
+- [#5626](https://github.com/influxdata/telegraf/issues/5626): Fix plugin name in influxdb_v2 output logging.
+- [#5621](https://github.com/influxdata/telegraf/issues/5621): Fix basedir check and parent dir extraction in filecount input.
+- [#5618](https://github.com/influxdata/telegraf/issues/5618): Listen before leaving start in statsd.
+- [#5595](https://github.com/influxdata/telegraf/issues/5595): Fix aggregator window alignment.
+- [#5637](https://github.com/influxdata/telegraf/issues/5637): Fix panic during shutdown of multiple aggregators.
+- [#5642](https://github.com/influxdata/telegraf/issues/5642): Fix parsing of kube config certificate-authority-data in prometheus input.
+- [#5636](https://github.com/influxdata/telegraf/issues/5636): Fix tags applied to wrong metric on parse error.
+- [#5522](https://github.com/influxdata/telegraf/issues/5522): Remove tags that would create invalid label names in prometheus output.
+
 ## v1.10.1 [2019-03-19]
 
 #### Bugfixes
