@@ -1,8 +1,15 @@
+## v1.10.3 [2019-04-16]
+
+#### Bugfixes
+
+- [#5680](https://github.com/influxdata/telegraf/pull/5680): Allow colons in metric names in prometheus_client output.
+- [#5716](https://github.com/influxdata/telegraf/pull/5716): Set log directory attributes in rpm spec.
+
 ## v1.10.2 [2019-04-02]
 
 #### Release Notes
 
-- String fields no longer have leading and trailing quotating marks removed in
+- String fields no longer have leading and trailing quotation marks removed in
   the grok parser.  If you are capturing quoted strings you may need to update
   the patterns.
 
