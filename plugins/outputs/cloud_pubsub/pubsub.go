@@ -2,7 +2,9 @@ package cloud_pubsub
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"log"
 	"sync"
 
 	"cloud.google.com/go/pubsub"
@@ -229,7 +231,8 @@ func (ps *PubSub) toMessages(metrics []telegraf.Metric) ([]*pubsub.Message, erro
 	for i, m := range metrics {
 		b, err := ps.serializer.Serialize(m)
 		if err != nil {
-			return nil, err
+			log.Printf("D! [outputs.cloud_pubsub] Could not serialize metric: %v", err)
+			continue
 		}
 
 		if ps.Base64Data {
