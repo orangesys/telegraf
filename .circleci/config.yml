@@ -4,7 +4,7 @@ defaults: &defaults
 
 deps-images: &deps-images
   docker:
-    - image: 'quay.io/influxdb/telegraf-ci:1.11.5'
+    - image: 'quay.io/influxdb/telegraf-ci:1.12.5'
 
 godep_cache_key: &godep_cache_key v1-vendor-{{ checksum "Gopkg.lock" }}
 restore_godep_cache: &restore_godep_cache
@@ -22,22 +22,6 @@ git-submodule: &git-submodule
     command: |
       git submodule sync --recursive
       git submodule update --recursive --init
----
-defaults:
-  defaults: &defaults
-    working_directory: '/go/src/github.com/influxdata/telegraf'
-  go-1_9: &go-1_9
-    docker:
-      - image: 'quay.io/influxdb/telegraf-ci:1.9.7'
-  go-1_10: &go-1_10
-    docker:
-      - image: 'quay.io/influxdb/telegraf-ci:1.10.8'
-  go-1_11: &go-1_11
-    docker:
-      - image: 'quay.io/influxdb/telegraf-ci:1.11.10'
-  go-1_12: &go-1_12
-    docker:
-      - image: 'quay.io/influxdb/telegraf-ci:1.12.5'
 
 version: 2
 
@@ -46,13 +30,6 @@ jobs:
     <<: [*defaults, *deps-images]
     steps:
       - checkout
-    <<: [ *defaults, *go-1_12 ]
-    steps:
-      - checkout
-      - restore_cache:
-          key: vendor-{{ checksum "Gopkg.lock" }}
-      - run: 'make deps'
-      - run: 'dep check'
       - save_cache:
           key: *checkout_cache_key
           paths: *working_directory      
@@ -81,56 +58,6 @@ jobs:
 
   release:
     <<: [*defaults, *deps-images]
-  test-go-1.10:
-    <<: [ *defaults, *go-1_10 ]
-    steps:
-      - attach_workspace:
-          at: '/go/src'
-      # disabled due to gofmt differences (1.10 vs 1.11).
-      #- run: 'make check'
-      - run: 'make test'
-  test-go-1.11:
-    <<: [ *defaults, *go-1_11 ]
-    steps:
-      - attach_workspace:
-          at: '/go/src'
-      - run: 'make check'
-      - run: 'make test'
-  test-go-1.12:
-    <<: [ *defaults, *go-1_12 ]
-    steps:
-      - attach_workspace:
-          at: '/go/src'
-      - run: 'GOARCH=386 make check'
-      - run: 'GOARCH=386 make test'
-  test-go-1.12-386:
-    <<: [ *defaults, *go-1_12 ]
-    steps:
-      - attach_workspace:
-          at: '/go/src'
-      - run: 'GOARCH=386 make check'
-      - run: 'GOARCH=386 make test'
-
-  package:
-    <<: [ *defaults, *go-1_12 ]
-    steps:
-      - attach_workspace:
-          at: '/go/src'
-      - run: 'make package'
-      - store_artifacts:
-          path: './build'
-          destination: 'build'
-  release:
-    <<: [ *defaults, *go-1_12 ]
-    steps:
-      - attach_workspace:
-          at: '/go/src'
-      - run: 'make package-release'
-      - store_artifacts:
-          path: './build'
-          destination: 'build'
-  nightly:
-    <<: [ *defaults, *go-1_12 ]
     steps:
       - attach_workspace:
           at: '/go/src'  
@@ -151,32 +78,6 @@ workflows:
             tags:
               only: /^v[0-9]+(\.[0-9]+)*(-.*)*/                
       - 'test':
-              only: /.*/
-      - 'test-go-1.9':
-          requires:
-            - 'deps'
-          filters:
-            tags:
-              only: /.*/
-      - 'test-go-1.10':
-          requires:
-            - 'deps'
-          filters:
-            tags:
-              only: /.*/
-      - 'test-go-1.11':
-          requires:
-            - 'deps'
-          filters:
-            tags:
-              only: /.*/
-      - 'test-go-1.12':
-          requires:
-            - 'deps'
-          filters:
-            tags:
-              only: /.*/
-      - 'test-go-1.12-386':
           requires:
             - 'deps'
           filters:
@@ -185,55 +86,8 @@ workflows:
       - 'release':
           requires:
             - 'test'
-              only: /.*/
-      - 'package':
-          requires:
-            - 'test-go-1.9'
-            - 'test-go-1.10'
-            - 'test-go-1.11'
-            - 'test-go-1.12'
-            - 'test-go-1.12-386'
-      - 'release':
-          requires:
-            - 'test-go-1.9'
-            - 'test-go-1.10'
-            - 'test-go-1.11'
-            - 'test-go-1.12'
-            - 'test-go-1.12-386'
           filters:
             tags:
               only: /^v[0-9]+(\.[0-9]+)*(-.*)*/
             branches:
               ignore: /.*/
-  nightly:
-    jobs:
-      - 'deps'
-      - 'test-go-1.9':
-          requires:
-            - 'deps'
-      - 'test-go-1.10':
-          requires:
-            - 'deps'
-      - 'test-go-1.11':
-          requires:
-            - 'deps'
-      - 'test-go-1.12':
-          requires:
-            - 'deps'
-      - 'test-go-1.12-386':
-          requires:
-            - 'deps'
-      - 'nightly':
-          requires:
-            - 'test-go-1.9'
-            - 'test-go-1.10'
-            - 'test-go-1.11'
-            - 'test-go-1.12'
-            - 'test-go-1.12-386'
-    triggers:
-      - schedule:
-          cron: "0 7 * * *"
-          filters:
-            branches:
-              only:
-                - master
