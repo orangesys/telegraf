@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"cloud.google.com/go/pubsub"
-	"encoding/base64"
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/internal"
 	"github.com/influxdata/telegraf/plugins/outputs"
