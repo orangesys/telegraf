@@ -1,3 +1,17 @@
+## v1.11.1 [2019-06-25]
+
+#### Bugfixes
+
+- [#5980](https://github.com/influxdata/telegraf/issues/5980): Cannot set mount_points option in disk input.
+- [#5983](https://github.com/influxdata/telegraf/issues/5983): Omit keys when creating measurement names for GNMI telemetry.
+- [#5972](https://github.com/influxdata/telegraf/issues/5972): Don't consider pid of 0 when using systemd lookup in procstat.
+- [#5807](https://github.com/influxdata/telegraf/issues/5807): Skip 404 error reporting in nginx_plus_api input.
+- [#5999](https://github.com/influxdata/telegraf/issues/5999): Fix panic if pool_mode column does not exist.
+- [#6019](https://github.com/influxdata/telegraf/issues/6019): Add missing container_id field to docker_container_status metrics.
+- [#5742](https://github.com/influxdata/telegraf/issues/5742): Ignore error when utmp is missing in system input.
+- [#6032](https://github.com/influxdata/telegraf/issues/6032): Add device, serial_no, and wwn tags to synthetic attributes.
+- [#6012](https://github.com/influxdata/telegraf/issues/6012): Fix parsing of remote tcp address in statsd input.
+
 ## v1.11 [2019-06-11]
 
 #### Release Notes
