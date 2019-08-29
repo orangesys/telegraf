@@ -22,6 +22,22 @@ git-submodule: &git-submodule
     command: |
       git submodule sync --recursive
       git submodule update --recursive --init
+---
+defaults:
+  defaults: &defaults
+    working_directory: '/go/src/github.com/influxdata/telegraf'
+  go-1_9: &go-1_9
+    docker:
+      - image: 'quay.io/influxdb/telegraf-ci:1.9.7'
+  go-1_10: &go-1_10
+    docker:
+      - image: 'quay.io/influxdb/telegraf-ci:1.10.8'
+  go-1_11: &go-1_11
+    docker:
+      - image: 'quay.io/influxdb/telegraf-ci:1.11.13'
+  go-1_12: &go-1_12
+    docker:
+      - image: 'quay.io/influxdb/telegraf-ci:1.12.9'
 
 version: 2
 
