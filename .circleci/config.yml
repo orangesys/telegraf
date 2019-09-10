@@ -4,7 +4,7 @@ defaults: &defaults
 
 deps-images: &deps-images
   docker:
-    - image: 'quay.io/influxdb/telegraf-ci:1.12.5'
+    - image: 'quay.io/influxdb/telegraf-ci:1.12.9'
 
 godep_cache_key: &godep_cache_key v1-vendor-{{ checksum "Gopkg.lock" }}
 restore_godep_cache: &restore_godep_cache
@@ -22,22 +22,6 @@ git-submodule: &git-submodule
     command: |
       git submodule sync --recursive
       git submodule update --recursive --init
----
-defaults:
-  defaults: &defaults
-    working_directory: '/go/src/github.com/influxdata/telegraf'
-    environment:
-      GOFLAGS: -p=8
-  go-1_10: &go-1_10
-    docker:
-      - image: 'quay.io/influxdb/telegraf-ci:1.10.8'
-  go-1_11: &go-1_11
-    docker:
-      - image: 'quay.io/influxdb/telegraf-ci:1.11.13'
-  go-1_12: &go-1_12
-    docker:
-      - image: 'quay.io/influxdb/telegraf-ci:1.12.9'
-
 version: 2
 
 jobs:
@@ -62,16 +46,6 @@ jobs:
 
   test:
     <<: [*defaults, *deps-images]
-  test-go-1.10:
-    <<: [ *defaults, *go-1_10 ]
-    steps:
-      - attach_workspace:
-          at: '/go/src'
-      # disabled due to gofmt differences (1.10 vs 1.11).
-      #- run: 'make check'
-      - run: 'make test'
-  test-go-1.11:
-    <<: [ *defaults, *go-1_11 ]
     steps:
       - attach_workspace:
           at: '/go/src'
@@ -80,7 +54,6 @@ jobs:
           name: Build test
           command: |
             CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o build/telegraf cmd/telegraf/telegraf.go
-
   release:
     <<: [*defaults, *deps-images]
     steps:
@@ -103,8 +76,6 @@ workflows:
             tags:
               only: /^v[0-9]+(\.[0-9]+)*(-.*)*/                
       - 'test':
-              only: /.*/
-      - 'test-go-1.10':
           requires:
             - 'deps'
           filters:
@@ -113,67 +84,8 @@ workflows:
       - 'release':
           requires:
             - 'test'
-              only: /.*/
-      - 'test-go-1.11':
-          requires:
-            - 'deps'
-          filters:
-            tags:
-              only: /.*/
-      - 'test-go-1.12':
-          requires:
-            - 'deps'
-          filters:
-            tags:
-              only: /.*/
-      - 'test-go-1.12-386':
-          requires:
-            - 'deps'
-          filters:
-            tags:
-              only: /.*/
-      - 'package':
-          requires:
-            - 'test-go-1.10'
-            - 'test-go-1.11'
-            - 'test-go-1.12'
-            - 'test-go-1.12-386'
-      - 'release':
-          requires:
-            - 'test-go-1.10'
-            - 'test-go-1.11'
-            - 'test-go-1.12'
-            - 'test-go-1.12-386'
           filters:
             tags:
               only: /^v[0-9]+(\.[0-9]+)*(-.*)*/
             branches:
               ignore: /.*/
-  nightly:
-    jobs:
-      - 'deps'
-      - 'test-go-1.10':
-          requires:
-            - 'deps'
-      - 'test-go-1.11':
-          requires:
-            - 'deps'
-      - 'test-go-1.12':
-          requires:
-            - 'deps'
-      - 'test-go-1.12-386':
-          requires:
-            - 'deps'
-      - 'nightly':
-          requires:
-            - 'test-go-1.10'
-            - 'test-go-1.11'
-            - 'test-go-1.12'
-            - 'test-go-1.12-386'
-    triggers:
-      - schedule:
-          cron: "0 7 * * *"
-          filters:
-            branches:
-              only:
-                - master
