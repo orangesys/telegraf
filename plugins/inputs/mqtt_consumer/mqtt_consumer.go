@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -61,6 +60,8 @@ type MQTTConsumer struct {
 	ClientID          string `toml:"client_id"`
 	tls.ClientConfig
 
+	Log telegraf.Logger
+
 	clientFactory ClientFactory
 	client        Client
 	opts          *mqtt.ClientOptions
@@ -113,7 +114,7 @@ var sampleConfig = `
   # max_undelivered_messages = 1000
 
   ## Persistent session disables clearing of the client session on connection.
-  ## In order for this option to work you must also set client_id to identity
+  ## In order for this option to work you must also set client_id to identify
   ## the client.  To receive messages that arrived while the client is offline,
   ## also set the qos option to 1 or 2 and don't forget to also set the QoS when
   ## publishing.
@@ -212,7 +213,7 @@ func (m *MQTTConsumer) connect() error {
 		return err
 	}
 
-	log.Printf("I! [inputs.mqtt_consumer] Connected %v", m.Servers)
+	m.Log.Infof("Connected %v", m.Servers)
 	m.state = Connected
 	m.sem = make(semaphore, m.MaxUndeliveredMessages)
 	m.messages = make(map[telegraf.TrackingID]bool)
@@ -223,7 +224,7 @@ func (m *MQTTConsumer) connect() error {
 		SessionPresent() bool
 	}
 	if t, ok := token.(sessionPresent); ok && t.SessionPresent() {
-		log.Printf("D! [inputs.mqtt_consumer] Session found %v", m.Servers)
+		m.Log.Debugf("Session found %v", m.Servers)
 		return nil
 	}
 
@@ -244,7 +245,7 @@ func (m *MQTTConsumer) connect() error {
 
 func (m *MQTTConsumer) onConnectionLost(c mqtt.Client, err error) {
 	m.acc.AddError(fmt.Errorf("connection lost: %v", err))
-	log.Printf("D! [inputs.mqtt_consumer] Disconnected %v", m.Servers)
+	m.Log.Debugf("Disconnected %v", m.Servers)
 	m.state = Disconnected
 	return
 }
@@ -292,9 +293,9 @@ func (m *MQTTConsumer) onMessage(acc telegraf.TrackingAccumulator, msg mqtt.Mess
 
 func (m *MQTTConsumer) Stop() {
 	if m.state == Connected {
-		log.Printf("D! [inputs.mqtt_consumer] Disconnecting %v", m.Servers)
+		m.Log.Debugf("Disconnecting %v", m.Servers)
 		m.client.Disconnect(200)
-		log.Printf("D! [inputs.mqtt_consumer] Disconnected %v", m.Servers)
+		m.Log.Debugf("Disconnected %v", m.Servers)
 		m.state = Disconnected
 	}
 	m.cancel()
@@ -303,7 +304,7 @@ func (m *MQTTConsumer) Stop() {
 func (m *MQTTConsumer) Gather(acc telegraf.Accumulator) error {
 	if m.state == Disconnected {
 		m.state = Connecting
-		log.Printf("D! [inputs.mqtt_consumer] Connecting %v", m.Servers)
+		m.Log.Debugf("Connecting %v", m.Servers)
 		m.connect()
 	}
 
@@ -346,7 +347,7 @@ func (m *MQTTConsumer) createOpts() (*mqtt.ClientOptions, error) {
 	for _, server := range m.Servers {
 		// Preserve support for host:port style servers; deprecated in Telegraf 1.4.4
 		if !strings.Contains(server, "://") {
-			log.Printf("W! [inputs.mqtt_consumer] Server %q should be updated to use `scheme://host:port` format", server)
+			m.Log.Warnf("Server %q should be updated to use `scheme://host:port` format", server)
 			if tlsCfg == nil {
 				server = "tcp://" + server
 			} else {

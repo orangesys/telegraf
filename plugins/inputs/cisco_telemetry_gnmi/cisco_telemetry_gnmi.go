@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"path"
 	"strings"
@@ -55,6 +54,8 @@ type CiscoTelemetryGNMI struct {
 	acc     telegraf.Accumulator
 	cancel  context.CancelFunc
 	wg      sync.WaitGroup
+
+	Log telegraf.Logger
 }
 
 // Subscription for a GNMI client
@@ -218,8 +219,8 @@ func (c *CiscoTelemetryGNMI) subscribeGNMI(ctx context.Context, address string, 
 		return fmt.Errorf("failed to send subscription request: %v", err)
 	}
 
-	log.Printf("D! [inputs.cisco_telemetry_gnmi]: Connection to GNMI device %s established", address)
-	defer log.Printf("D! [inputs.cisco_telemetry_gnmi]: Connection to GNMI device %s closed", address)
+	c.Log.Debugf("Connection to GNMI device %s established", address)
+	defer c.Log.Debugf("Connection to GNMI device %s closed", address)
 	for ctx.Err() == nil {
 		var reply *gnmi.SubscribeResponse
 		if reply, err = subscribeClient.Recv(); err != nil {
@@ -274,7 +275,7 @@ func (c *CiscoTelemetryGNMI) handleSubscribeResponse(address string, reply *gnmi
 			if alias, ok := c.aliases[aliasPath]; ok {
 				name = alias
 			} else {
-				log.Printf("D! [inputs.cisco_telemetry_gnmi]: No measurement alias for GNMI path: %s", name)
+				c.Log.Debugf("No measurement alias for GNMI path: %s", name)
 			}
 		}
 
@@ -304,7 +305,7 @@ func (c *CiscoTelemetryGNMI) handleTelemetryField(update *gnmi.Update, tags map[
 
 	// Make sure a value is actually set
 	if update.Val == nil || update.Val.Value == nil {
-		log.Printf("I! [inputs.cisco_telemetry_gnmi]: Discarded empty or legacy type value with path: %s", path)
+		c.Log.Infof("Discarded empty or legacy type value with path: %q", path)
 		return aliasPath, nil
 	}
 

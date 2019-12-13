@@ -4,7 +4,7 @@ defaults: &defaults
 
 deps-images: &deps-images
   docker:
-    - image: 'quay.io/influxdb/telegraf-ci:1.12.9'
+    - image: 'quay.io/influxdb/telegraf-ci:1.13.5'
 
 godep_cache_key: &godep_cache_key v1-vendor-{{ checksum "Gopkg.lock" }}
 restore_godep_cache: &restore_godep_cache
