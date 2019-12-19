@@ -54,6 +54,7 @@ jobs:
           name: Build test
           command: |
             CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o build/telegraf cmd/telegraf/telegraf.go
+            build/telegraf etc/telegraf.conf
   release:
     <<: [*defaults, *deps-images]
     steps:
