@@ -1,3 +1,18 @@
+## v1.13.1 [2020-01-08]
+
+#### Bugfixes
+
+- [#6788](https://github.com/influxdata/telegraf/issues/6788): Fix ServerProperty query stops working on Azure after failover.
+- [#6803](https://github.com/influxdata/telegraf/pull/6803): Add leading period to OID in SNMP v1 generic traps.
+- [#6823](https://github.com/influxdata/telegraf/pull/6823): Fix missing config fields in prometheus serializer.
+- [#6694](https://github.com/influxdata/telegraf/issues/6694): Fix panic on connection loss with undelivered messages in mqtt_consumer.
+- [#6679](https://github.com/influxdata/telegraf/issues/6679): Encode query hash fields as hex strings in sqlserver input.
+- [#6345](https://github.com/influxdata/telegraf/issues/6345): Invalidate diskio cache if the metadata mtime has changed.
+- [#6800](https://github.com/influxdata/telegraf/issues/6800): Show platform not supported warning only on plugin creation.
+- [#6814](https://github.com/influxdata/telegraf/issues/6814): Fix rabbitmq cannot complete gather after request error.
+- [#6846](https://github.com/influxdata/telegraf/issues/6846): Fix /sbin/init --version executed on Telegraf startup.
+- [#6847](https://github.com/influxdata/telegraf/issues/6847): Use last path element as field key if path fully specified.
+
 ## v1.13 [2019-12-12]
 
 #### Release Notes
