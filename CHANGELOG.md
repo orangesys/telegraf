@@ -1,3 +1,39 @@
+## v1.13.3 [2020-02-04]
+
+#### Bugfixes
+
+- [#5744](https://github.com/influxdata/telegraf/issues/5744): Fix kibana input with Kibana versions greater than 6.4.
+- [#6960](https://github.com/influxdata/telegraf/issues/6960): Fix duplicate TrackingIDs can be returned in queue consumer plugins.
+- [#6913](https://github.com/influxdata/telegraf/issues/6913): Support up to 4096 stats in the ethtool input.
+- [#6973](https://github.com/influxdata/telegraf/issues/6973): Expire metrics on query in addition to on add.
+
+## v1.13.2 [2020-01-21]
+
+#### Bugfixes
+
+- [#2652](https://github.com/influxdata/telegraf/issues/2652): Warn without error when processes input is started on Windows.
+- [#6890](https://github.com/influxdata/telegraf/issues/6890): Only parse certificate blocks in x509_cert input.
+- [#6883](https://github.com/influxdata/telegraf/issues/6883): Add custom attributes for all resource types in vsphere input.
+- [#6899](https://github.com/influxdata/telegraf/pull/6899): Fix URL agent address form with udp in snmp input.
+- [#6619](https://github.com/influxdata/telegraf/issues/6619): Change logic to allow recording of device fields when attributes is false.
+- [#6903](https://github.com/influxdata/telegraf/issues/6903): Do not add invalid timestamps to kafka messages.
+- [#6906](https://github.com/influxdata/telegraf/issues/6906): Fix json_strict option and set default of true.
+
+## v1.13.1 [2020-01-08]
+
+#### Bugfixes
+
+- [#6788](https://github.com/influxdata/telegraf/issues/6788): Fix ServerProperty query stops working on Azure after failover.
+- [#6803](https://github.com/influxdata/telegraf/pull/6803): Add leading period to OID in SNMP v1 generic traps.
+- [#6823](https://github.com/influxdata/telegraf/pull/6823): Fix missing config fields in prometheus serializer.
+- [#6694](https://github.com/influxdata/telegraf/issues/6694): Fix panic on connection loss with undelivered messages in mqtt_consumer.
+- [#6679](https://github.com/influxdata/telegraf/issues/6679): Encode query hash fields as hex strings in sqlserver input.
+- [#6345](https://github.com/influxdata/telegraf/issues/6345): Invalidate diskio cache if the metadata mtime has changed.
+- [#6800](https://github.com/influxdata/telegraf/issues/6800): Show platform not supported warning only on plugin creation.
+- [#6814](https://github.com/influxdata/telegraf/issues/6814): Fix rabbitmq cannot complete gather after request error.
+- [#6846](https://github.com/influxdata/telegraf/issues/6846): Fix /sbin/init --version executed on Telegraf startup.
+- [#6847](https://github.com/influxdata/telegraf/issues/6847): Use last path element as field key if path fully specified in cisco_telemetry_gnmi input.
+
 ## v1.13 [2019-12-12]
 
 #### Release Notes

@@ -760,20 +760,12 @@
   revision = "c2b33e84"
 
 [[projects]]
-  branch = "master"
-  digest = "1:2c5ad58492804c40bdaf5d92039b0cde8b5becd2b7feeb37d7d1cc36a8aa8dbe"
-  name = "github.com/kardianos/osext"
-  packages = ["."]
-  pruneopts = ""
-  revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
-
-[[projects]]
-  branch = "master"
-  digest = "1:fed90fa725d3b1bac0a760de64426834dfef4546474cf182f2ec94285afa74a8"
+  digest = "1:b498ceccf0d2efa0af877b1dda20d3742ef9ff7475123e8e922016f0b737069b"
   name = "github.com/kardianos/service"
   packages = ["."]
   pruneopts = ""
-  revision = "615a14ed75099c9eaac6949e22ac2341bf9d3197"
+  revision = "56787a3ea05e9b262708192e7ce3b500aba73561"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:3e160bec100719bb664ce5192b42e82e66b290397da4c0845aed5ce3cfce60cb"
@@ -1088,11 +1080,12 @@
   revision = "e2704e165165ec55d062f5919b4b29494e9fa790"
 
 [[projects]]
-  digest = "1:a18bd4e530f3f36fe91a5d1fd57d492f25287546e613f892d21c2b76b848517d"
+  branch = "master"
+  digest = "1:d9be8e928ce32259bd677e21a1105251a0e5130f238121e702230551f3a533e7"
   name = "github.com/safchain/ethtool"
   packages = ["."]
   pruneopts = ""
-  revision = "42ed695e3de80b9d695f280295fd7994639f209d"
+  revision = "ef7e7c9c27639f149a3c4bfae07a9c0fc3a1691a"
 
 [[projects]]
   branch = "master"
