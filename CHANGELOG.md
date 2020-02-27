@@ -1,3 +1,19 @@
+## v1.13.4 [2020-02-25]
+
+#### Release Notes
+
+- Official packages now built with Go 1.13.8.
+
+#### Bugfixes
+
+- [#6988](https://github.com/influxdata/telegraf/issues/6988): Parse NaN values from summary types in prometheus input.
+- [#6820](https://github.com/influxdata/telegraf/issues/6820): Fix pgbouncer input when used with newer pgbouncer versions.
+- [#6913](https://github.com/influxdata/telegraf/issues/6913): Support up to 8192 stats in the ethtool input.
+- [#7060](https://github.com/influxdata/telegraf/issues/7060): Fix perf counters collection on named instances in sqlserver input.
+- [#6926](https://github.com/influxdata/telegraf/issues/6926): Use add time for prometheus expiration calculation.
+- [#7057](https://github.com/influxdata/telegraf/issues/7057): Fix inconsistency with input error counting in internal input.
+- [#7063](https://github.com/influxdata/telegraf/pull/7063): Use the same timestamp per call if no time is provided in prometheus input.
+
 ## v1.13.3 [2020-02-04]
 
 #### Bugfixes
@@ -38,7 +54,10 @@
 
 #### Release Notes
 
-- Official packages built with Go 1.13.5.
+- Official packages built with Go 1.13.5.  This affects the minimum supported
+  version on several platforms, most notably requiring Windows 7 (2008 R2) or
+  later.  For details, check the release notes for Go
+  [ports](https://golang.org/doc/go1.13#ports).
 - The `prometheus` input and `prometheus_client` output have a new mapping to
   and from Telegraf metrics, which can be enabled by setting `metric_version = 2`.
   The original mapping is deprecated.  When both plugins have the same setting,
