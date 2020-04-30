@@ -1,27 +1,6 @@
 defaults: &defaults
   working_directory: &working_directory
     /go/src/github.com/influxdata/telegraf
----
-defaults:
-  defaults: &defaults
-    working_directory: '/go/src/github.com/influxdata/telegraf'
-    environment:
-      GOFLAGS: -p=8
-  go-1_12: &go-1_12
-    docker:
-      - image: 'quay.io/influxdb/telegraf-ci:1.12.17'
-        environment:
-          GO111MODULE: 'on'
-  go-1_13: &go-1_13
-    docker:
-      - image: 'quay.io/influxdb/telegraf-ci:1.13.8'
-  mac: &mac
-    macos:
-      xcode: 11.3.1
-    working_directory: '~/go/src/github.com/influxdata/telegraf'
-    environment:
-      HOMEBREW_NO_AUTO_UPDATE: 1
-      GOFLAGS: -p=8
 
 deps-images: &deps-images
   docker:
@@ -60,43 +39,10 @@ jobs:
           key: *godep_cache_key
           paths:
             - "./vendor"
-      - restore_cache:
-          key: go-mod-v1-{{ checksum "go.sum" }}
-      - run: 'make deps'
-      - run: 'make tidy'
-      - save_cache:
-          name: 'go module cache'
-          key: go-mod-v1-{{ checksum "go.sum" }}
-          paths:
-            - '/go/pkg/mod'
       - persist_to_workspace:
-          root: '/go'
+          root: '/go/src'
           paths:
             - '*'
-  macdeps:
-    <<: [ *mac ]
-    steps:
-      - checkout
-      - restore_cache:
-          key: mac-go-mod-v1-{{ checksum "go.sum" }}
-      - run: 'brew install go@1.13'
-      - run: 'make deps'
-      - run: 'make tidy'
-      - save_cache:
-          name: 'go module cache'
-          key: mac-go-mod-v1-{{ checksum "go.sum" }}
-          paths:
-            - '~/go/pkg/mod'
-            - '/usr/local/Cellar/go'
-            - '/usr/local/bin/go'
-            - '/usr/local/bin/gofmt'
-      - persist_to_workspace:
-          root: '/'
-          paths:
-            - 'usr/local/bin/go'
-            - 'usr/local/Cellar/go'
-            - 'usr/local/bin/gofmt'
-            - 'Users/distiller/go'
 
   test:
     <<: [*defaults, *deps-images]
@@ -118,70 +64,6 @@ jobs:
           name: Release package to github
           command: |
             .circleci/github-release.sh
-  test-go-1.12:
-    <<: [ *defaults, *go-1_12 ]
-    steps:
-      - attach_workspace:
-          at: '/go'
-      - run: 'make'
-      - run: 'make test'
-  test-go-1.12-386:
-    <<: [ *defaults, *go-1_12 ]
-    steps:
-      - attach_workspace:
-          at: '/go'
-      - run: 'GOARCH=386 make'
-      - run: 'GOARCH=386 make test'
-  test-go-1.13:
-    <<: [ *defaults, *go-1_13 ]
-    steps:
-      - attach_workspace:
-          at: '/go'
-      - run: 'make'
-      - run: 'make check'
-      - run: 'make check-deps'
-      - run: 'make test'
-  test-go-1.13-386:
-    <<: [ *defaults, *go-1_13 ]
-    steps:
-      - attach_workspace:
-          at: '/go'
-      - run: 'GOARCH=386 make'
-      - run: 'GOARCH=386 make check'
-      - run: 'GOARCH=386 make test'
-  test-go-1.13-darwin:
-    <<: [ *mac ]
-    steps:
-      - attach_workspace:
-          at: '/'
-      - run: 'make'
-      - run: 'make check'
-      - run: 'make test'
-
-  package:
-    <<: [ *defaults, *go-1_13 ]
-    steps:
-      - attach_workspace:
-          at: '/go'
-      - run: 'make package'
-      - store_artifacts:
-          path: './build'
-          destination: 'build'
-  release:
-    <<: [ *defaults, *go-1_13 ]
-    steps:
-      - attach_workspace:
-          at: '/go'
-      - run: 'make package-release'
-      - store_artifacts:
-          path: './build'
-          destination: 'build'
-  nightly:
-    <<: [ *defaults, *go-1_13 ]
-    steps:
-      - attach_workspace:
-          at: '/go'
-      - run: 'make package-nightly'
       - store_artifacts:
           path: './artifacts'
           destination: '.'
@@ -190,10 +72,6 @@ workflows:
   version: 2
   build_and_release:
     jobs:
-      - 'macdeps':
-          filters:
-            tags:
-              only: /.*/
       - 'deps':
           filters:
             tags:
@@ -204,19 +82,6 @@ workflows:
           filters:
             tags:
               only: /^v[0-9]+(\.[0-9]+)*(-.*)*/
-              only: /.*/
-      - 'test-go-1.13-darwin':
-          requires:
-            - 'macdeps'
-          filters:
-            tags: # only runs on tags if you specify this filter
-              only: /.*/
-      - 'package':
-          requires:
-            - 'test-go-1.12'
-            - 'test-go-1.12-386'
-            - 'test-go-1.13'
-            - 'test-go-1.13-386'
       - 'release':
           requires:
             - 'test'
